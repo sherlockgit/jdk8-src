@@ -276,7 +276,7 @@ public class HashMap<K,V> extends AbstractMap<K,V>
      * Basic hash bin node, used for most entries.  (See below for
      * TreeNode subclass, and in LinkedHashMap for its Entry subclass.)
      */
-    static class Node<K,V> implements Map.Entry<K,V> {
+    static class Node<K,V> implements Entry<K,V> {
         final int hash;
         final K key;
         V value;
@@ -307,7 +307,7 @@ public class HashMap<K,V> extends AbstractMap<K,V>
             if (o == this)
                 return true;
             if (o instanceof Map.Entry) {
-                Map.Entry<?,?> e = (Map.Entry<?,?>)o;
+                Entry<?,?> e = (Entry<?,?>)o;
                 if (Objects.equals(key, e.getKey()) &&
                     Objects.equals(value, e.getValue()))
                     return true;
@@ -336,9 +336,7 @@ public class HashMap<K,V> extends AbstractMap<K,V>
      */
     static final int hash(Object key) {
         int h;
-        //本质是通过将高 16 位信息混合到低 16 位，解决小表长场景下的哈希冲突问题。
-        //比如key为字符串“demo”，hash值为3079651，转化为二进制是1011101111110111100011，右移16位得0000000000000000101110，将二者按位异或得1011101111110111001101，返回十进制值3079629
-        return (key == null) ? 0 : (h = key.hashCode()) ^ (h >>> 16);
+        return (key == null) ? 0 : (h = key.hashCode()) ^ (h >>> 16);//本质是通过将高 16 位信息混合到低 16 位，解决小表长场景下的哈希冲突问题。        //比如key为字符串“demo”，hash值为3079651，转化为二进制是1011101111110111100011，右移16位得0000000000000000101110，将二者按位异或得1011101111110111001101，返回十进制值3079629
     }
 
     /**
@@ -401,7 +399,7 @@ public class HashMap<K,V> extends AbstractMap<K,V>
      * Holds cached entrySet(). Note that AbstractMap fields are used
      * for keySet() and values().
      */
-    transient Set<Map.Entry<K,V>> entrySet;
+    transient Set<Entry<K,V>> entrySet;
 
     /**
      * The number of key-value mappings contained in this map.
@@ -511,7 +509,7 @@ public class HashMap<K,V> extends AbstractMap<K,V>
             }
             else if (s > threshold)
                 resize();
-            for (Map.Entry<? extends K, ? extends V> e : m.entrySet()) {
+            for (Entry<? extends K, ? extends V> e : m.entrySet()) {
                 K key = e.getKey();
                 V value = e.getValue();
                 putVal(hash(key), key, value, false, evict);
@@ -626,62 +624,42 @@ public class HashMap<K,V> extends AbstractMap<K,V>
      */
     final V putVal(int hash, K key, V value, boolean onlyIfAbsent,
                    boolean evict) {
-        //tab：当前hashmap存储值的核心结构（数组+链表）//p:当前key对应的数据节点//n:数组长度//i:当前key计算出的hash值后与之匹配的桶位置
-        Node<K,V>[] tab; Node<K,V> p; int n, i;
-        if ((tab = table) == null || (n = tab.length) == 0)
-            //若当前还未初始化结构,则进行初始化
+        Node<K,V>[] tab; Node<K,V> p; int n, i;  //tab：当前hashmap存储值的核心结构（数组+链表）//p:当前key对应的数据节点//n:数组长度//i:当前key计算出的hash值后与之匹配的桶位置
+        if ((tab = table) == null || (n = tab.length) == 0) //若当前还未初始化结构,则进行初始化
             n = (tab = resize()).length;
-        if ((p = tab[i = (n - 1) & hash]) == null)
-            //若命中的桶没有节点，则生成对应的节点数据存入该桶
+        if ((p = tab[i = (n - 1) & hash]) == null) //若命中的桶没有节点，则生成对应的节点数据存入该桶
             tab[i] = newNode(hash, key, value, null);
-            //p:当前key对应的数据节点
-        else {
-            //命中的桶已有节点（即hash冲突）
-
-            //p:当前桶的第一个数据节点
-            //e:被作用的节点（不为空时则代表hashmap中有相同的key值）//k:被作用节点的key
-            Node<K,V> e; K k;
+        else { //命中的桶已有节点（即hash冲突）
+            Node<K,V> e; K k; //e:被作用的节点（不为空时则代表hashmap中有相同的key值）//k:被作用节点的key
             if (p.hash == hash &&
                 ((k = p.key) == key || (key != null && key.equals(k))))
-                //key值与桶的第一个节点key值相同
                 e = p;
             else if (p instanceof TreeNode)
-                //todo ?
-                e = ((TreeNode<K,V>)p).putTreeVal(this, tab, hash, key, value);
+                e = ((TreeNode<K,V>)p).putTreeVal(this, tab, hash, key, value);//todo ?
             else {
-                for (int binCount = 0; ; ++binCount) {
-                    //遍历
-                    if ((e = p.next) == null) {
-                        //不存在相同的key值，生成新的链表节点
+                for (int binCount = 0; ; ++binCount) {//遍历链表
+                    if ((e = p.next) == null) {//不存在相同的key值，生成新的链表节点
                         p.next = newNode(hash, key, value, null);
                         if (binCount >= TREEIFY_THRESHOLD - 1) // -1 for 1st
-                            //todo ?
-                            treeifyBin(tab, hash);
+                            treeifyBin(tab, hash);//todo ?
                         break;
                     }
                     if (e.hash == hash &&
-                        ((k = e.key) == key || (key != null && key.equals(k))))
-                        //存在相同的key值跳出本次循环
+                        ((k = e.key) == key || (key != null && key.equals(k))))//存在相同的key值跳出本次循环
                         break;
-                    //这里的作用与(e = p.next)相呼应
-                    p = e;
+                    p = e; //这里的作用与(e = p.next)相呼应
                 }
             }
-            if (e != null) { // existing mapping for key
-                //不为空时则代表hashmap中有相同的key值
+            if (e != null) { // existing mapping for key  //不为空时则代表hashmap中有相同的key值
                 V oldValue = e.value;
-                if (!onlyIfAbsent || oldValue == null)
-                    //onlyIfAbsent如果为true,则不更新已经存在的值
+                if (!onlyIfAbsent || oldValue == null)//onlyIfAbsent如果为true,则不更新已经存在的值
                     e.value = value;
                 afterNodeAccess(e);
                 return oldValue;
             }
         }
-        //更新次数？ todo
-        ++modCount;
-        //size hashmap中node节点的个数
-        if (++size > threshold)
-            //个数大于阈值时重构数据结构
+        ++modCount;//更新次数？ todo
+        if (++size > threshold)//size hashmap中node节点的个数 //个数大于阈值时重构数据结构
             resize();
         afterNodeInsertion(evict);
         return null;
@@ -697,14 +675,10 @@ public class HashMap<K,V> extends AbstractMap<K,V>
      * @return the table
      */
     final Node<K,V>[] resize() {
-        //旧的数据结构
-        Node<K,V>[] oldTab = table;
-        //旧的数据结构对应的数组长度（容量）
-        int oldCap = (oldTab == null) ? 0 : oldTab.length;
-        //旧的阈值
-        int oldThr = threshold;
-        //newCap：新的数据结构对应的数组长度//newThr新的阈值
-        int newCap, newThr = 0;
+        Node<K,V>[] oldTab = table;//旧的数据结构
+        int oldCap = (oldTab == null) ? 0 : oldTab.length;//旧的数据结构对应的数组长度（容量）
+        int oldThr = threshold;//旧的阈值
+        int newCap, newThr = 0;//newCap：新的数据结构对应的数组长度//newThr新的阈值
         if (oldCap > 0) {
             if (oldCap >= MAXIMUM_CAPACITY) {
                 threshold = Integer.MAX_VALUE;
@@ -717,8 +691,7 @@ public class HashMap<K,V> extends AbstractMap<K,V>
         else if (oldThr > 0) // initial capacity was placed in threshold
             newCap = oldThr;
         else {               // zero initial threshold signifies using defaults
-            //一开始hashmap的容量（16）以及阈值（容量*负载因子0.75）
-            newCap = DEFAULT_INITIAL_CAPACITY;
+            newCap = DEFAULT_INITIAL_CAPACITY;//一开始hashmap的容量（16）以及阈值（容量*负载因子0.75）
             newThr = (int)(DEFAULT_LOAD_FACTOR * DEFAULT_INITIAL_CAPACITY);
         }
         if (newThr == 0) {
@@ -726,11 +699,9 @@ public class HashMap<K,V> extends AbstractMap<K,V>
             newThr = (newCap < MAXIMUM_CAPACITY && ft < (float)MAXIMUM_CAPACITY ?
                       (int)ft : Integer.MAX_VALUE);
         }
-        //赋值新的阈值
-        threshold = newThr;
-        //创建新的数据结构
+        threshold = newThr;//赋值新的阈值
         @SuppressWarnings({"rawtypes","unchecked"})
-        Node<K,V>[] newTab = (Node<K,V>[])new Node[newCap];
+        Node<K,V>[] newTab = (Node<K,V>[])new Node[newCap];//创建新的数据结构
         table = newTab;
         if (oldTab != null) {
             for (int j = 0; j < oldCap; ++j) {
@@ -1031,38 +1002,38 @@ public class HashMap<K,V> extends AbstractMap<K,V>
      *
      * @return a set view of the mappings contained in this map
      */
-    public Set<Map.Entry<K,V>> entrySet() {
-        Set<Map.Entry<K,V>> es;
+    public Set<Entry<K,V>> entrySet() {
+        Set<Entry<K,V>> es;
         return (es = entrySet) == null ? (entrySet = new EntrySet()) : es;
     }
 
-    final class EntrySet extends AbstractSet<Map.Entry<K,V>> {
+    final class EntrySet extends AbstractSet<Entry<K,V>> {
         public final int size()                 { return size; }
         public final void clear()               { HashMap.this.clear(); }
-        public final Iterator<Map.Entry<K,V>> iterator() {
+        public final Iterator<Entry<K,V>> iterator() {
             return new EntryIterator();
         }
         public final boolean contains(Object o) {
             if (!(o instanceof Map.Entry))
                 return false;
-            Map.Entry<?,?> e = (Map.Entry<?,?>) o;
+            Entry<?,?> e = (Entry<?,?>) o;
             Object key = e.getKey();
             Node<K,V> candidate = getNode(hash(key), key);
             return candidate != null && candidate.equals(e);
         }
         public final boolean remove(Object o) {
             if (o instanceof Map.Entry) {
-                Map.Entry<?,?> e = (Map.Entry<?,?>) o;
+                Entry<?,?> e = (Entry<?,?>) o;
                 Object key = e.getKey();
                 Object value = e.getValue();
                 return removeNode(hash(key), key, value, true, true) != null;
             }
             return false;
         }
-        public final Spliterator<Map.Entry<K,V>> spliterator() {
+        public final Spliterator<Entry<K,V>> spliterator() {
             return new EntrySpliterator<>(HashMap.this, 0, -1, 0, 0);
         }
-        public final void forEach(Consumer<? super Map.Entry<K,V>> action) {
+        public final void forEach(Consumer<? super Entry<K,V>> action) {
             Node<K,V>[] tab;
             if (action == null)
                 throw new NullPointerException();
@@ -1428,7 +1399,7 @@ public class HashMap<K,V> extends AbstractMap<K,V>
 
             // Check Map.Entry[].class since it's the nearest public type to
             // what we're actually creating.
-            SharedSecrets.getJavaOISAccess().checkArray(s, Map.Entry[].class, cap);
+            SharedSecrets.getJavaOISAccess().checkArray(s, Entry[].class, cap);
             @SuppressWarnings({"rawtypes","unchecked"})
             Node<K,V>[] tab = (Node<K,V>[])new Node[cap];
             table = tab;
@@ -1504,8 +1475,8 @@ public class HashMap<K,V> extends AbstractMap<K,V>
     }
 
     final class EntryIterator extends HashIterator
-        implements Iterator<Map.Entry<K,V>> {
-        public final Map.Entry<K,V> next() { return nextNode(); }
+        implements Iterator<Entry<K,V>> {
+        public final Entry<K,V> next() { return nextNode(); }
     }
 
     /* ------------------------------------------------------------ */
@@ -1692,7 +1663,7 @@ public class HashMap<K,V> extends AbstractMap<K,V>
 
     static final class EntrySpliterator<K,V>
         extends HashMapSpliterator<K,V>
-        implements Spliterator<Map.Entry<K,V>> {
+        implements Spliterator<Entry<K,V>> {
         EntrySpliterator(HashMap<K,V> m, int origin, int fence, int est,
                          int expectedModCount) {
             super(m, origin, fence, est, expectedModCount);
@@ -1705,7 +1676,7 @@ public class HashMap<K,V> extends AbstractMap<K,V>
                                           expectedModCount);
         }
 
-        public void forEachRemaining(Consumer<? super Map.Entry<K,V>> action) {
+        public void forEachRemaining(Consumer<? super Entry<K,V>> action) {
             int i, hi, mc;
             if (action == null)
                 throw new NullPointerException();
@@ -1734,7 +1705,7 @@ public class HashMap<K,V> extends AbstractMap<K,V>
             }
         }
 
-        public boolean tryAdvance(Consumer<? super Map.Entry<K,V>> action) {
+        public boolean tryAdvance(Consumer<? super Entry<K,V>> action) {
             int hi;
             if (action == null)
                 throw new NullPointerException();

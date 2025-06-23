@@ -14,9 +14,9 @@ public class Test {
     public static void main(String[] args) {
         HashMap<String,Integer> map = new HashMap<>();
         for(int i = 1; i<50 ; i++){
-            if (i < 12) {
+            if (i < 13) {
                 map.put(getKey(),i);//首次创建hashmap的数组+链表
-            }else if(i == 12){
+            }else if(i == 13){
                 map.put(getKey(),i);//首次创建hashmap的数组+链表
             }
         }
