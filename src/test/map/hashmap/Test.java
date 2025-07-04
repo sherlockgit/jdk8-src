@@ -1,6 +1,7 @@
 package test.map.hashmap;
 
 
+import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.UUID;
 
@@ -13,13 +14,16 @@ public class Test {
 
     public static void main(String[] args) {
         HashMap<String,Integer> map = new HashMap<>();
-        for(int i = 1; i<50 ; i++){
+        for(int i = 1; i<14 ; i++){
             if (i < 13) {
                 map.put(getKey(),i);//首次创建hashmap的数组+链表
             }else if(i == 13){
-                map.put(getKey(),i);//首次创建hashmap的数组+链表
+                map.put(getKey(),i);//首次扩张数组
             }
         }
+        BigDecimal bigDecimal = new BigDecimal("1000.0000");
+        BigDecimal bigDecimal2 = new BigDecimal("1000.0000");
+        System.out.println(bigDecimal.equals(bigDecimal2));
 
     }
 

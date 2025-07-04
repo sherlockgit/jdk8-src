@@ -640,7 +640,7 @@ public class HashMap<K,V> extends AbstractMap<K,V>
                 for (int binCount = 0; ; ++binCount) {//遍历链表
                     if ((e = p.next) == null) {//不存在相同的key值，生成新的链表节点
                         p.next = newNode(hash, key, value, null);
-                        if (binCount >= TREEIFY_THRESHOLD - 1) // -1 for 1st
+                        if (binCount >= TREEIFY_THRESHOLD - 1) // -1 for 1st 当链表达到8时尝试演进为红黑树（演进为红黑树的另外一个隐藏条件：数组长度达到64；treeifyBin(tab, hash)）
                             treeifyBin(tab, hash);//todo ?
                         break;
                     }
@@ -680,13 +680,13 @@ public class HashMap<K,V> extends AbstractMap<K,V>
         int oldThr = threshold;//旧的阈值
         int newCap, newThr = 0;//newCap：新的数据结构对应的数组长度//newThr新的阈值
         if (oldCap > 0) {
-            if (oldCap >= MAXIMUM_CAPACITY) {
-                threshold = Integer.MAX_VALUE;
+            if (oldCap >= MAXIMUM_CAPACITY) {//是否大于key的存储个数 最大1 << 30;
+                threshold = Integer.MAX_VALUE;//不再做扩展 返回原先的结构
                 return oldTab;
             }
-            else if ((newCap = oldCap << 1) < MAXIMUM_CAPACITY &&
+            else if ((newCap = oldCap << 1) < MAXIMUM_CAPACITY &&//数组长度扩张一倍
                      oldCap >= DEFAULT_INITIAL_CAPACITY)
-                newThr = oldThr << 1; // double threshold
+                newThr = oldThr << 1; // double threshold//阈值扩张一倍
         }
         else if (oldThr > 0) // initial capacity was placed in threshold
             newCap = oldThr;
@@ -701,31 +701,31 @@ public class HashMap<K,V> extends AbstractMap<K,V>
         }
         threshold = newThr;//赋值新的阈值
         @SuppressWarnings({"rawtypes","unchecked"})
-        Node<K,V>[] newTab = (Node<K,V>[])new Node[newCap];//创建新的数据结构
+        Node<K,V>[] newTab = (Node<K,V>[])new Node[newCap];//创建新的数据结构并且赋予新的数组长度
         table = newTab;
-        if (oldTab != null) {
+        if (oldTab != null) {//原有值重新放进新的数据结构
             for (int j = 0; j < oldCap; ++j) {
                 Node<K,V> e;
                 if ((e = oldTab[j]) != null) {
                     oldTab[j] = null;
-                    if (e.next == null)
-                        newTab[e.hash & (newCap - 1)] = e;
+                    if (e.next == null) //该桶的链表只有一个
+                        newTab[e.hash & (newCap - 1)] = e; //入桶算法
                     else if (e instanceof TreeNode)
-                        ((TreeNode<K,V>)e).split(this, newTab, j, oldCap);
+                        ((TreeNode<K,V>)e).split(this, newTab, j, oldCap); // todo?
                     else { // preserve order
-                        Node<K,V> loHead = null, loTail = null;
-                        Node<K,V> hiHead = null, hiTail = null;
+                        Node<K,V> loHead = null, loTail = null; //低位节点
+                        Node<K,V> hiHead = null, hiTail = null; //高位节点
                         Node<K,V> next;
                         do {
                             next = e.next;
-                            if ((e.hash & oldCap) == 0) {
+                            if ((e.hash & oldCap) == 0) { //判断高低位的关键判断 //构建低位链表 //比传统的hash & (newCap-1) 减少 O(n) 次位运算
                                 if (loTail == null)
                                     loHead = e;
                                 else
                                     loTail.next = e;
                                 loTail = e;
                             }
-                            else {
+                            else { //构建高位链表
                                 if (hiTail == null)
                                     hiHead = e;
                                 else
@@ -733,11 +733,11 @@ public class HashMap<K,V> extends AbstractMap<K,V>
                                 hiTail = e;
                             }
                         } while ((e = next) != null);
-                        if (loTail != null) {
+                        if (loTail != null) { //低位链表（新索引 = 旧索引）
                             loTail.next = null;
                             newTab[j] = loHead;
                         }
-                        if (hiTail != null) {
+                        if (hiTail != null) { //高位链表（新索引 = 旧索引 + oldCap）
                             hiTail.next = null;
                             newTab[j + oldCap] = hiHead;
                         }
@@ -754,7 +754,7 @@ public class HashMap<K,V> extends AbstractMap<K,V>
      */
     final void treeifyBin(Node<K,V>[] tab, int hash) {
         int n, index; Node<K,V> e;
-        if (tab == null || (n = tab.length) < MIN_TREEIFY_CAPACITY)
+        if (tab == null || (n = tab.length) < MIN_TREEIFY_CAPACITY) // 数组长度小于64时不演进为红黑树 而是进行扩容。
             resize();
         else if ((e = tab[index = (n - 1) & hash]) != null) {
             TreeNode<K,V> hd = null, tl = null;
