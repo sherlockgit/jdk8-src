@@ -24,7 +24,6 @@ public class Test {
         BigDecimal bigDecimal = new BigDecimal("1000.0000");
         BigDecimal bigDecimal2 = new BigDecimal("1000.0000");
         System.out.println(bigDecimal.equals(bigDecimal2));
-
     }
 
     public static String getKey(){

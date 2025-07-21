@@ -341,19 +341,19 @@ public class HashMap<K,V> extends AbstractMap<K,V>
 
     /**
      * Returns x's Class if it is of the form "class C implements
-     * Comparable<C>", else null.
+     * Comparable<C>", else null. 如果 x的Class是Comparable，则返回 x，否则为 null。 如： class Student implements Comparable<Student>
      */
     static Class<?> comparableClassFor(Object x) {
-        if (x instanceof Comparable) {
-            Class<?> c; Type[] ts, as; Type t; ParameterizedType p;
-            if ((c = x.getClass()) == String.class) // bypass checks
+        if (x instanceof Comparable) { // 当x是含有比较器时
+            Class<?> c; Type[] ts, as; Type t; ParameterizedType p; // c:x的class; ts:x对象对应类的所有实现接口；t:下面循环时赋值的每个接口类型；p:下面循环时赋值的每个接口类型为泛型时的原始类型
+            if ((c = x.getClass()) == String.class) // bypass checks String 类型时跳过检查
                 return c;
-            if ((ts = c.getGenericInterfaces()) != null) {
-                for (int i = 0; i < ts.length; ++i) {
-                    if (((t = ts[i]) instanceof ParameterizedType) &&
+            if ((ts = c.getGenericInterfaces()) != null) { // getGenericInterfaces：获取一个类所有实现的接口；并且不等于null时
+                for (int i = 0; i < ts.length; ++i) { //遍历x对象对象对应类的所有接口
+                    if (((t = ts[i]) instanceof ParameterizedType) && // 接口类型是泛型时
                         ((p = (ParameterizedType)t).getRawType() ==
-                         Comparable.class) &&
-                        (as = p.getActualTypeArguments()) != null &&
+                         Comparable.class) && //泛型接口的元素类型等于Comparable时
+                        (as = p.getActualTypeArguments()) != null && // Comparable的泛型参数只有一个且是x的类时
                         as.length == 1 && as[0] == c) // type arg is c
                         return c;
                 }
@@ -364,11 +364,11 @@ public class HashMap<K,V> extends AbstractMap<K,V>
 
     /**
      * Returns k.compareTo(x) if x matches kc (k's screened comparable
-     * class), else 0.
+     * class), else 0. 如果 x 与 kc（k 的筛选可比类）匹配，则返回 k.compareTo（x），否则返回 0。
      */
     @SuppressWarnings({"rawtypes","unchecked"}) // for cast to Comparable
     static int compareComparables(Class<?> kc, Object k, Object x) {
-        return (x == null || x.getClass() != kc ? 0 :
+        return (x == null || x.getClass() != kc ? 0 : // todo ? x又可能为null?
                 ((Comparable)k).compareTo(x));
     }
 
@@ -641,7 +641,7 @@ public class HashMap<K,V> extends AbstractMap<K,V>
                     if ((e = p.next) == null) {//不存在相同的key值，生成新的链表节点
                         p.next = newNode(hash, key, value, null);
                         if (binCount >= TREEIFY_THRESHOLD - 1) // -1 for 1st 当链表达到8时尝试演进为红黑树（演进为红黑树的另外一个隐藏条件：数组长度达到64；treeifyBin(tab, hash)）
-                            treeifyBin(tab, hash);//todo ?
+                            treeifyBin(tab, hash);// 升级为红黑树
                         break;
                     }
                     if (e.hash == hash &&
@@ -753,23 +753,23 @@ public class HashMap<K,V> extends AbstractMap<K,V>
      * table is too small, in which case resizes instead.
      */
     final void treeifyBin(Node<K,V>[] tab, int hash) {
-        int n, index; Node<K,V> e;
+        int n, index; Node<K,V> e; //n:当前链表长度；index:当前节点对应的数组槽位；e:对应的链表
         if (tab == null || (n = tab.length) < MIN_TREEIFY_CAPACITY) // 数组长度小于64时不演进为红黑树 而是进行扩容。
             resize();
-        else if ((e = tab[index = (n - 1) & hash]) != null) {
-            TreeNode<K,V> hd = null, tl = null;
-            do {
-                TreeNode<K,V> p = replacementTreeNode(e, null);
-                if (tl == null)
+        else if ((e = tab[index = (n - 1) & hash]) != null) { // todo ？有可能等于null?
+            TreeNode<K,V> hd = null, tl = null; // hd:头部节点；tl:遍历过程中的上一个节点
+            do { //遍历连接
+                TreeNode<K,V> p = replacementTreeNode(e, null); //链表节点转变为红黑树节点
+                if (tl == null) //上一个节点为空时，当前遍历节点为头部节点
                     hd = p;
-                else {
-                    p.prev = tl;
-                    tl.next = p;
+                else { //上一个节点不为空时
+                    p.prev = tl; // 赋值当前遍历节点的上一个节点
+                    tl.next = p; // 赋值上一个节点的下一个节点为当前遍历节点
                 }
-                tl = p;
+                tl = p; //本次循环结束前，赋值上一个节点与为当前节点
             } while ((e = e.next) != null);
-            if ((tab[index] = hd) != null)
-                hd.treeify(tab);
+            if ((tab[index] = hd) != null) // todo ? 有可能等于null?
+                hd.treeify(tab); // 真正的红黑树转化
         }
     }
 
@@ -1894,11 +1894,11 @@ public class HashMap<K,V> extends AbstractMap<K,V>
          * hashCodes and non-comparable. We don't require a total
          * order, just a consistent insertion rule to maintain
          * equivalence across rebalancings. Tie-breaking further than
-         * necessary simplifies testing a bit.
+         * necessary simplifies testing a bit. 当 hashCodes 相等且不可比时，用于对插入进行排序的决胜算实用程序。我们不需要总顺序，只需要一个一致的插入规则来保持重新平衡之间的等效性。比必要的更进一步的决胜局会稍微简化测试。
          */
         static int tieBreakOrder(Object a, Object b) {
             int d;
-            if (a == null || b == null ||
+            if (a == null || b == null || // todo a == null || b == null ？
                 (d = a.getClass().getName().
                  compareTo(b.getClass().getName())) == 0)
                 d = (System.identityHashCode(a) <= System.identityHashCode(b) ?
@@ -1909,40 +1909,40 @@ public class HashMap<K,V> extends AbstractMap<K,V>
         /**
          * Forms tree of the nodes linked from this node.
          */
-        final void treeify(Node<K,V>[] tab) {
-            TreeNode<K,V> root = null;
+        final void treeify(Node<K,V>[] tab) { //红黑树转化
+            TreeNode<K,V> root = null; //root 节点
             for (TreeNode<K,V> x = this, next; x != null; x = next) {
-                next = (TreeNode<K,V>)x.next;
-                x.left = x.right = null;
-                if (root == null) {
-                    x.parent = null;
-                    x.red = false;
-                    root = x;
+                next = (TreeNode<K,V>)x.next; // 赋值当前循环节点的下一个节点
+                x.left = x.right = null; // 将左子树和又子树初始化为空
+                if (root == null) { // root节点为null时
+                    x.parent = null; //设置当前循环节点的父节点为null
+                    x.red = false; //红黑树规则：root节点只能为黑色
+                    root = x; //将当前节点赋值给root节点
                 }
-                else {
-                    K k = x.key;
-                    int h = x.hash;
-                    Class<?> kc = null;
+                else { // root节点不为null时
+                    K k = x.key; //当前循环节点的key
+                    int h = x.hash; //当前循环节点的hash
+                    Class<?> kc = null; //key的类型
                     for (TreeNode<K,V> p = root;;) {
-                        int dir, ph;
-                        K pk = p.key;
-                        if ((ph = p.hash) > h)
-                            dir = -1;
-                        else if (ph < h)
-                            dir = 1;
-                        else if ((kc == null &&
-                                  (kc = comparableClassFor(k)) == null) ||
-                                 (dir = compareComparables(kc, k, pk)) == 0)
-                            dir = tieBreakOrder(k, pk);
+                        int dir, ph;  //dir:决定当前循环节点是在左子树还是右子树，-1：左；1：右；ph:父节点的hash值
+                        K pk = p.key; //pk 父节点的key
+                        if ((ph = p.hash) > h) // 父节点的hash值大于当前循环节点的hash值时
+                            dir = -1; // 当前循环节点属于父节点的左子树
+                        else if (ph < h) // 父节点的hash值小于当前循环节点的hash值时
+                            dir = 1; // 当前循环节点属于父节点的右子树
+                        else if ((kc == null && //key的类型等于null时
+                                  (kc = comparableClassFor(k)) == null) ||  //key的类型没有实现比较器“Comparable” 时
+                                 (dir = compareComparables(kc, k, pk)) == 0) // key值相等时（注意：该部分比较都考虑了key为对象时的情况；总体来说，这部份为了处理当key的hash值相同时，判断该key是否实现了Comparable，若实现Comparable，则dir的值由Comparable的实现去决定；否则dir=0）
+                            dir = tieBreakOrder(k, pk); //当 hashCodes 相等且不可比时的（最终对比方法）；用原始hashcode（System.identityHashCode()）进行对比
 
-                        TreeNode<K,V> xp = p;
-                        if ((p = (dir <= 0) ? p.left : p.right) == null) {
-                            x.parent = xp;
-                            if (dir <= 0)
-                                xp.left = x;
-                            else
-                                xp.right = x;
-                            root = balanceInsertion(root, x);
+                        TreeNode<K,V> xp = p; //xp：父节点
+                        if ((p = (dir <= 0) ? p.left : p.right) == null) {  //根据dir判断左子节点或者右子节点为null时（同时将结果赋值给p，此时p已经由父节点变成子节点，同时也是下一次循环的父节点（若有值则直接进入下次循环））
+                            x.parent = xp; //当前节点与父节点建立联系
+                            if (dir <= 0) //左子树
+                                xp.left = x; // 父节点的左子节点与当前节点建立联系
+                            else //右子树
+                                xp.right = x; // 父节点的右子节点与当前节点建立联系
+                            root = balanceInsertion(root, x); // 插入时的树的平衡调整
                             break;
                         }
                     }
@@ -2223,20 +2223,20 @@ public class HashMap<K,V> extends AbstractMap<K,V>
 
         static <K,V> TreeNode<K,V> balanceInsertion(TreeNode<K,V> root,
                                                     TreeNode<K,V> x) {
-            x.red = true;
-            for (TreeNode<K,V> xp, xpp, xppl, xppr;;) {
-                if ((xp = x.parent) == null) {
-                    x.red = false;
-                    return x;
+            x.red = true; //新插入的节点默认为红色；一般在插入红黑树节点的时候，会将这个节点设置为（不破坏红黑树特性：从任一节点到其每个叶子的所有路径，都包含相同数目的黑色节点。）
+            for (TreeNode<K,V> xp, xpp, xppl, xppr;;) { //xp:当前节点的父节点；xpp:祖父节点；xppl：祖父节点的左子节点
+                if ((xp = x.parent) == null) {  // 当前节点的父节点为空时，说明当前节点是root节点
+                    x.red = false; // 红黑树规则：root节点只能为黑色
+                    return x; //返回值为平衡后的root节点
                 }
-                else if (!xp.red || (xpp = xp.parent) == null)
-                    return root;
-                if (xp == (xppl = xpp.left)) {
-                    if ((xppr = xpp.right) != null && xppr.red) {
-                        xppr.red = false;
-                        xp.red = false;
-                        xpp.red = true;
-                        x = xpp;
+                else if (!xp.red || (xpp = xp.parent) == null) //父节点为黑色并且祖父节点为空时
+                    return root; //返回值为平衡后的root节点
+                if (xp == (xppl = xpp.left)) { //父节点为祖父节点的左子节点时
+                    if ((xppr = xpp.right) != null && xppr.red) { // 祖父节点的右子节点不为空 并且 为红色时
+                        xppr.red = false; //祖父节点的右子节点变为黑色
+                        xp.red = false; //父节点变为黑色
+                        xpp.red = true;  //祖父节点变为红色
+                        x = xpp; //将当前节点设置为祖父节点
                     }
                     else {
                         if (x == xp.right) {
@@ -2252,7 +2252,7 @@ public class HashMap<K,V> extends AbstractMap<K,V>
                         }
                     }
                 }
-                else {
+                else { //父节点为祖父节点的右子节点时
                     if (xppl != null && xppl.red) {
                         xppl.red = false;
                         xp.red = false;
