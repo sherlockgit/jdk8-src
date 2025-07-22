@@ -24,6 +24,10 @@ public class Test {
         BigDecimal bigDecimal = new BigDecimal("1000.0000");
         BigDecimal bigDecimal2 = new BigDecimal("1000.0000");
         System.out.println(bigDecimal.equals(bigDecimal2));
+
+        String a = "1772515498295169024";
+        String[] as = a.split(",");
+        System.out.println(map.get(null));
     }
 
     public static String getKey(){

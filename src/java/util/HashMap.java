@@ -2186,37 +2186,37 @@ public class HashMap<K,V> extends AbstractMap<K,V>
         // Red-black tree methods, all adapted from CLR
 
         static <K,V> TreeNode<K,V> rotateLeft(TreeNode<K,V> root,
-                                              TreeNode<K,V> p) {
-            TreeNode<K,V> r, pp, rl;
-            if (p != null && (r = p.right) != null) {
-                if ((rl = p.right = r.left) != null)
-                    rl.parent = p;
-                if ((pp = r.parent = p.parent) == null)
-                    (root = r).red = false;
-                else if (pp.left == p)
-                    pp.left = r;
+                                              TreeNode<K,V> p) { //p 父节点（支点）
+            TreeNode<K,V> r, pp, rl; //r：父节点的右子节点（当前节点）；pp：当前节点的祖父节点；rl:当前节点的左子节点
+            if (p != null && (r = p.right) != null) { //父节点（支点）不为空且当前节点不为空时
+                if ((rl = p.right = r.left) != null) // 当前节点的左子节点作为当前节点父节点的右子节点；当前节点的左子节点不为null时
+                    rl.parent = p;//当前节点的左子节点的父节点赋值为当前节点的父节点
+                if ((pp = r.parent = p.parent) == null) //当前节点的父节点变为当前节点的祖父节点； 当前节点的祖父节点为null时
+                    (root = r).red = false; //此时当前节点为roo节点，root节点的颜色必须为黑色
+                else if (pp.left == p) //当前节点的祖父节点的左子节点为当前节点父节点时
+                    pp.left = r;//当前节点的祖父节点的左子节赋值为当前节点
                 else
-                    pp.right = r;
-                r.left = p;
-                p.parent = r;
+                    pp.right = r; //当前节点的祖父节点的右子节赋值为当前节点
+                r.left = p; //当前节点的左子节点赋值为当前节点的父节点
+                p.parent = r;//当前节点的父节点赋值为当前节点
             }
             return root;
         }
 
         static <K,V> TreeNode<K,V> rotateRight(TreeNode<K,V> root,
-                                               TreeNode<K,V> p) {
-            TreeNode<K,V> l, pp, lr;
-            if (p != null && (l = p.left) != null) {
-                if ((lr = p.left = l.right) != null)
-                    lr.parent = p;
-                if ((pp = l.parent = p.parent) == null)
-                    (root = l).red = false;
-                else if (pp.right == p)
-                    pp.right = l;
+                                               TreeNode<K,V> p) { //p:父节点（支点）
+            TreeNode<K,V> l, pp, lr; //l:父节点的左子节点（当前节点）；lr:当前节点的右子节点
+            if (p != null && (l = p.left) != null) {//父节点（支点）不为空且当前节点不为空时
+                if ((lr = p.left = l.right) != null) //当前节点的右子节点作为当前节点父节点的左子节点；当前节点的右子节点不为空时
+                    lr.parent = p; //当前节点的右子节点的父节点赋值为当前节点的父节点
+                if ((pp = l.parent = p.parent) == null) //当前节点的父节点变为当前节点的祖父节点； 当前节点的祖父节点为null时
+                    (root = l).red = false; //此时当前节点为roo节点，root节点的颜色必须为黑色
+                else if (pp.right == p) //当前节点的祖父节点的右子节点为当前节点父节点时
+                    pp.right = l; //当前节点的祖父节点的右子节赋值为当前节点
                 else
-                    pp.left = l;
-                l.right = p;
-                p.parent = l;
+                    pp.left = l; //当前节点的祖父节点的左子节赋值为当前节点
+                l.right = p; //当前节点的右子节点赋值为当前节点的父节点
+                p.parent = l; //当前节点的父节点赋值为当前节点
             }
             return root;
         }
@@ -2238,16 +2238,16 @@ public class HashMap<K,V> extends AbstractMap<K,V>
                         xpp.red = true;  //祖父节点变为红色
                         x = xpp; //将当前节点设置为祖父节点
                     }
-                    else {
-                        if (x == xp.right) {
-                            root = rotateLeft(root, x = xp);
-                            xpp = (xp = x.parent) == null ? null : xp.parent;
+                    else { // 祖父节点的右子节点为黑色（特性3：叶子节点（NIL）一定是黑色）
+                        if (x == xp.right) { //当前节点为父节点的右子节点时
+                            root = rotateLeft(root, x = xp); //左旋，并且将父节点赋值给当前节点
+                            xpp = (xp = x.parent) == null ? null : xp.parent; //左旋后重新整理关系，x还是为当前节点，xp，还是为当前节点的父节点，xpp为前节点的祖父节点
                         }
-                        if (xp != null) {
-                            xp.red = false;
-                            if (xpp != null) {
-                                xpp.red = true;
-                                root = rotateRight(root, xpp);
+                        if (xp != null) { //当前节点的父节点不为空时
+                            xp.red = false; //父节点变为黑色节点
+                            if (xpp != null) { //祖父节点不为空时
+                                xpp.red = true; //祖父节点变为红色
+                                root = rotateRight(root, xpp); //右旋
                             }
                         }
                     }
